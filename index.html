@@ -3,190 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ 正大杯省决实时监控终端 (Supabase真双端互联)</title>
+    <title>⚡ 正大杯省决·全域监控阵列</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         :root { --bg-color: #0b0f19; --glass-bg: rgba(20, 25, 40, 0.6); --glass-border: rgba(255, 255, 255, 0.08); --primary: #00d4ff; --secondary: #bd00ff; --text-main: #ffffff; --text-muted: #8b9bb4; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); background-image: radial-gradient(circle at 0% 0%, rgba(0, 212, 255, 0.15), transparent 30%), radial-gradient(circle at 100% 100%, rgba(189, 0, 255, 0.15), transparent 30%); color: var(--text-main); min-height: 100vh; padding: 2rem; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 2rem; background-image: radial-gradient(circle at 0% 0%, rgba(0, 212, 255, 0.15), transparent 30%), radial-gradient(circle at 100% 100%, rgba(189, 0, 255, 0.15), transparent 30%); }
         
-        /* 登录和连接动效掩膜 */
         #loginOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 100; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .login-box { background: var(--glass-bg); padding: 3rem; border-radius: 20px; border: 1px solid var(--glass-border); text-align: center; }
+        .login-box { background: var(--glass-bg); padding: 3rem; border-radius: 20px; border: 1px solid var(--glass-border); text-align: center; width: 400px;}
         .login-box input { background: rgba(255,255,255,0.1); border: 1px solid var(--primary); color: white; padding: 1rem; border-radius: 8px; width: 100%; margin: 1.5rem 0; font-size: 1.2rem; outline: none; text-align: center; }
         .login-box button { background: linear-gradient(90deg, var(--primary), var(--secondary)); border: none; color: white; padding: 1rem 2rem; font-size: 1.1rem; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
         
         .header { text-align: center; margin-bottom: 2rem; }
-        .header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header h1 { font-size: 2.2rem; margin-bottom: 5px; background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .status-dot { display: inline-block; width: 8px; height: 8px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 8px #00ff88; margin-right: 5px; }
+
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; max-width: 1600px; margin: 0 auto; }
+        .member-card { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2rem; transition: border-color 0.3s; position: relative; }
+        .member-card.syncing { border-color: var(--primary); box-shadow: 0 0 20px rgba(0,212,255,0.2); }
         
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 1400px; margin: 0 auto; }
-        .panel { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2rem; transition: border-color 0.3s; }
-        .panel.syncing { border-color: var(--primary); box-shadow: 0 0 20px rgba(0,212,255,0.2); }
-        h2 { border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;}
+        .role-badge { position: absolute; top: 15px; right: 15px; background: rgba(0,212,255,0.2); color: var(--primary); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; }
+        .captain-badge { background: rgba(189,0,255,0.2); color: var(--secondary); border: 1px solid var(--secondary); }
         
-        .task-list { list-style: none; }
-        .task-item { display: flex; align-items: center; background: rgba(255,255,255,0.05); padding: 1rem; margin-bottom: 0.8rem; border-radius: 10px; }
-        .task-checkbox { width: 22px; height: 22px; appearance: none; border: 2px solid var(--primary); border-radius: 5px; margin-right: 15px; cursor: pointer; position: relative; }
+        h3 { border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1.5rem; font-size: 1.4rem; }
+        
+        .progress-bar-container { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 1.5rem; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.5s ease; width: 0%; }
+
+        .task-list { list-style: none; margin-bottom: 1.5rem; }
+        .task-item { display: flex; align-items: center; background: rgba(255,255,255,0.05); padding: 1rem; margin-bottom: 0.8rem; border-radius: 10px; transition: 0.3s; }
+        .task-checkbox { width: 22px; height: 22px; appearance: none; border: 2px solid var(--primary); border-radius: 5px; margin-right: 15px; cursor: pointer; position: relative; flex-shrink: 0; }
         .task-checkbox:checked { background: var(--primary); }
         .task-checkbox:checked::after { content: '✓'; position: absolute; left: 4px; top: 0px; color: #000; font-weight: bold; }
-        .task-text { flex-grow: 1; font-size: 1.05rem; }
+        .task-text { flex-grow: 1; font-size: 1rem; }
         .task-checkbox:checked ~ .task-text { text-decoration: line-through; color: var(--text-muted); }
         
-        .milestone-day { margin-bottom: 2rem; background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 15px; }
-        .milestone-day h3 { color: var(--secondary); margin-bottom: 1rem; }
+        .add-task-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px dashed var(--glass-border); color: white; padding: 0.8rem; border-radius: 8px; margin-bottom: 1.5rem; }
+        .add-task-input:focus { border-color: var(--primary); outline: none; }
         .m-input { width: 100%; background: transparent; border: 1px solid var(--glass-border); color: white; padding: 0.8rem; margin-bottom: 1rem; border-radius: 5px; font-family: inherit;}
         .m-input:focus { border-color: var(--primary); outline: none; }
-        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 1rem; }
-        .photo-grid img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--glass-border); }
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 1rem; }
+        .photo-grid img { width: 100%; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--glass-border); }
         .upload-btn { display: inline-block; padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); border-radius: 5px; cursor: pointer; font-size: 0.9rem; }
         input[type="file"] { display: none; }
-        @media(max-width: 900px) { .dashboard { grid-template-columns: 1fr; } .login-box { width: 90%; } }
+        
+        .captain-actions { margin-left: auto; display: flex; gap: 15px; }
+        .action-icon { cursor: pointer; font-size: 1.1rem; filter: grayscale(1); transition: 0.2s; }
+        .action-icon:hover { filter: grayscale(0); transform: scale(1.2); }
+
+        @media(max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } .login-box { width: 90%; } }
     </style>
 </head>
 <body>
     <div id="loginOverlay">
         <div class="login-box">
-            <h2>打卡身份验证</h2>
-            <p style="color:var(--text-muted); margin-top: 10px;">输入绑定的手机号 (12:00 / 20:00 考核节点)</p>
-            <input type="tel" id="phoneInput" placeholder="输入11位手机号">
-            <button onclick="login()">连入云端集群</button>
+            <h2>全速入阵</h2>
+            <p style="color:var(--text-muted); margin-top: 10px;">输入你的名字以解锁专属战线</p>
+            <input type="text" id="nameInput" placeholder="输入真实打卡姓名" value="">
+            <button onclick="login()">连入指战大屏</button>
         </div>
         <p id="systemLog" style="margin-top: 20px; color: var(--primary); font-family: monospace;"></p>
     </div>
 
     <div class="header">
-        <h1>🏆 正大杯进度监控大屏</h1>
+        <h1>🏆 正大杯省决·突击监控阵列</h1>
         <p style="color: var(--text-muted);">
-            <span class="status-dot"></span>已连接 Supabase 云端 | 当前操作者: <span id="currentUser" style="color:var(--primary)">未验证</span>
+            <span class="status-dot"></span>云端链路已对齐 | 行动代号: <span id="currentUser" style="color:var(--primary); font-weight:bold;">未识别</span>
         </p>
     </div>
 
-    <div class="dashboard" id="dashboard" style="display:none;">
-        <div class="panel" id="taskPanel">
-            <h2>今日分工打卡 <span style="font-size: 0.9rem; font-weight: normal; background:rgba(0,212,255,0.2); padding: 3px 8px; border-radius:12px; color:var(--primary)">实时推流版</span></h2>
-            <ul class="task-list" id="taskList"></ul>
-        </div>
-        <div class="panel" id="milestonePanel">
-            <h2>成果云复盘空间</h2>
-            <div class="milestone-day">
-                <h3>DAY 1 - 架构与初稿</h3>
-                <textarea class="m-input" rows="2" placeholder="填写反思..." id="day1Reflect" onblur="saveToCloud()"></textarea>
-                <input class="m-input" type="text" placeholder="明日计划..." id="day1Plan" onblur="saveToCloud()">
-                <label class="upload-btn">+ 上传打卡截图 (自动推流)<input type="file" accept="image/*" onchange="handleImg(event, 'day1')"></label>
-                <div class="photo-grid" id="day1Photos"></div>
-            </div>
-            <div class="milestone-day">
-                <h3>DAY 2 - PPT定稿与排版</h3>
-                <textarea class="m-input" rows="2" placeholder="填写反思..." id="day2Reflect" onblur="saveToCloud()"></textarea>
-                <input class="m-input" type="text" placeholder="明日计划..." id="day2Plan" onblur="saveToCloud()">
-                <label class="upload-btn">+ 上传打卡截图 (自动推流)<input type="file" accept="image/*" onchange="handleImg(event, 'day2')"></label>
-                <div class="photo-grid" id="day2Photos"></div>
-            </div>
-        </div>
-    </div>
+    <div class="dashboard-grid" id="mainDashboard"></div>
 
-    <!-- 霸道的全量 CDN 资源：不用装模块，直接接管云端通讯 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // 【核心】你刚才截胡的云端账号密码，我们只放前台验证专用的 Publishable Key
+        // 🚨【非常关键】只有输入这个名字，系统才会暴露出所有人的卡片并开放生杀特权
+        const CAPTAIN_NAME = '队长'; 
+
         const _URL = 'https://koezaddleeifmutjuahxb.supabase.co';
         const _KEY = 'sb_publishable_HNanTTMNG-_so9Z-q9NR5A_L2ehha0M';
         const supabase = window.supabase.createClient(_URL, _KEY);
 
-        // 初始化空壳内存
         let appState = null;
+        let myName = null;
+        let isCaptain = false;
         const logPanel = document.getElementById('systemLog');
 
         async function login() {
-            const phone = document.getElementById('phoneInput').value;
-            if(phone.length >= 4) { 
-                logPanel.innerText = '> 正在链接底层数据库 PostgreSQL...';
-                
-                // 【绝杀 1：一键拉取初始状态】
-                const { data, error } = await supabase.from('zdcb_state').select('app_data').eq('id', 1).single();
-                if (error) {
-                    alert('抱歉，获取云端数据失败！请确保你在Supabase里跑了我给的SQL建表语句。');
-                    console.error(error);
-                    return;
-                }
-                
-                appState = data.app_data;
-                document.getElementById('loginOverlay').style.display = 'none'; 
-                document.getElementById('dashboard').style.display = 'grid'; 
-                document.getElementById('currentUser').innerText = phone; 
-                
-                render(); 
-                activateRealtimeMagic(); // 开启多指互通
-            } else { 
-                alert('系统告警：请输入有效号码'); 
-            }
+            myName = document.getElementById('nameInput').value.trim();
+            if(myName.length < 1) return alert('系统告警：不得潜行进入。请填写真实身份名字！');
+            
+            isCaptain = (myName === CAPTAIN_NAME);
+            logPanel.innerText = '> 正在贯穿 Supabase 底层主线...';
+            
+            const { data, error } = await supabase.from('zdcb_state').select('app_data').eq('id', 1).single();
+            if (error) return alert('严重异常：无法连通数据库，请确认上方SQL已成功在Supabase跑完。');
+            
+            appState = data.app_data;
+            document.getElementById('loginOverlay').style.display = 'none'; 
+            
+            const roleName = isCaptain ? '【战区最高统筹指挥】' : '【一线破障专员】';
+            document.getElementById('currentUser').innerText = `${myName} ${roleName}`; 
+            
+            render(); 
+            activateRealtimeMagic();
         }
 
-        // 【绝杀 2：全表监听热重载 (如果队长在另一头画了勾，你这边自动打出勾)】
         function activateRealtimeMagic() {
             supabase.channel('custom-update-channel')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'zdcb_state' }, payload => {
-                // 截获推流：有其他人更新了云端！
                 appState = payload.new.app_data;
-                flashPanel(); // 屏幕闪烁一下，提醒有新进度
+                document.querySelectorAll('.member-card').forEach(p => {
+                    p.classList.add('syncing'); setTimeout(() => p.classList.remove('syncing'), 800);
+                });
                 render();
             })
-            .subscribe((status) => {
-                if(status === 'SUBSCRIBED') console.log('✅ WebSocket 真双向数据环建立完毕');
-            });
+            .subscribe();
         }
 
-        function flashPanel() {
-            document.querySelectorAll('.panel').forEach(p => {
-                p.classList.add('syncing'); setTimeout(() => p.classList.remove('syncing'), 800);
-            });
-        }
-
-        // 【绝杀 3：将你在屏幕上改动的任何状态，上卷并塞回数据库同步给全员】
         async function saveToCloud() {
-            // 先采集屏幕上的文字写入内存
-            appState.milestones.day1.reflect = document.getElementById('day1Reflect').value;
-            appState.milestones.day1.plan = document.getElementById('day1Plan').value;
-            appState.milestones.day2.reflect = document.getElementById('day2Reflect').value;
-            appState.milestones.day2.plan = document.getElementById('day2Plan').value;
-            
-            // 发射回云端
-            const { error } = await supabase.from('zdcb_state').update({ app_data: appState }).eq('id', 1);
-            if (error) console.error("同步失败", error);
+            if (!isCaptain) {
+                const myIndex = appState.members.findIndex(m => m.name === myName);
+                if(myIndex > -1) {
+                    appState.members[myIndex].reflect = document.getElementById(`ref_${myName}`).value;
+                    appState.members[myIndex].plan = document.getElementById(`plan_${myName}`).value;
+                }
+            } else {
+                appState.members.forEach(m => {
+                    const rNode = document.getElementById(`ref_${m.name}`);
+                    const pNode = document.getElementById(`plan_${m.name}`);
+                    if(rNode && pNode) { m.reflect = rNode.value; m.plan = pNode.value; }
+                });
+            }
+            await supabase.from('zdcb_state').update({ app_data: appState }).eq('id', 1);
         }
 
-        // --- 以下是基础交互体系 ---
+        function toggleTask(memberName, taskId) { 
+            const member = appState.members.find(m => m.name === memberName);
+            const task = member.tasks.find(t => t.id === taskId);
+            task.done = !task.done;
+            saveToCloud(); render();
+        }
 
-        function handleImg(event, day) {
+        function addTask(memberName, inputElem) {
+            if(event.key !== 'Enter') return;
+            const text = inputElem.value.trim();
+            if(!text) return;
+            const member = appState.members.find(m => m.name === memberName);
+            member.tasks.push({ id: Date.now(), text: text, done: false });
+            inputElem.value = '';
+            saveToCloud(); render();
+        }
+
+        function editTask(memberName, taskId) {
+            const member = appState.members.find(m => m.name === memberName);
+            const task = member.tasks.find(t => t.id === taskId);
+            const newText = prompt("强制抹写该卡片任务内容:", task.text);
+            if (newText !== null && newText.trim() !== "") {
+                task.text = newText.trim();
+                saveToCloud(); render();
+            }
+        }
+
+        function deleteTask(memberName, taskId) {
+            if(!confirm("司令确认：销毁该目标任务吗？")) return;
+            const member = appState.members.find(m => m.name === memberName);
+            member.tasks = member.tasks.filter(t => t.id !== taskId);
+            saveToCloud(); render();
+        }
+
+        function handleImg(event, memberName) {
             const file = event.target.files[0]; if(!file) return;
             const reader = new FileReader();
             reader.onload = function(e) { 
-                // 为了兼容极速演示，将图片压缩成Base64（注：真实业务会塞入storage，这里直接跟状态树走，秒级同步展示）
-                appState.milestones[day].photos.push(e.target.result); 
-                saveToCloud(); 
-                render(); 
+                const member = appState.members.find(m => m.name === memberName);
+                member.photos.push(e.target.result); 
+                saveToCloud(); render(); 
             };
             reader.readAsDataURL(file);
         }
 
-        function toggleTask(taskId) { 
-            const t = appState.tasks.find(x => x.id === taskId); 
-            t.done = !t.done; 
-            saveToCloud(); // 你一侧打钩，数据库状态就变，其他人就会触发热重载
-            render(); 
-        }
-
-        // 视图渲染层
         function render() {
-            document.getElementById('taskList').innerHTML = appState.tasks.map(t => `<li class="task-item"><input type="checkbox" class="task-checkbox" \${t.done ? 'checked' : ''} onchange="toggleTask(\${t.id})"><span class="task-text">[\${t.owner}] \${t.title}</span></li>`).join('');
-            document.getElementById('day1Reflect').value = appState.milestones.day1.reflect; 
-            document.getElementById('day1Plan').value = appState.milestones.day1.plan; 
-            document.getElementById('day2Reflect').value = appState.milestones.day2.reflect; 
-            document.getElementById('day2Plan').value = appState.milestones.day2.plan;
-            const renderPhotos = (day) => appState.milestones[day].photos.map(src => `<img src="\${src}">`).join('');
-            document.getElementById('day1Photos').innerHTML = renderPhotos('day1'); 
-            document.getElementById('day2Photos').innerHTML = renderPhotos('day2');
+            const dash = document.getElementById('mainDashboard');
+            dash.innerHTML = ''; 
+
+            let renderList = isCaptain ? appState.members : appState.members.filter(m => m.name === myName);
+            
+            // 安全防误拦截，如果是根本乱填的名字
+            if(renderList.length === 0) {
+                dash.innerHTML = '<h3 style="color:#ff4d4d; text-align:center; width:100%; border:2px dashed #ff4d4d; padding:40px;">⚠️ 数据流污染拦截：您的身份代号未在 Supabase 军事名册记录中！</h3>'; return;
+            }
+
+            renderList.forEach(m => {
+                const total = m.tasks.length;
+                const completed = m.tasks.filter(t => t.done).length;
+                const percent = total > 0 ? (completed / total * 100).toFixed(0) : 0;
+                
+                let taskHTML = m.tasks.map(t => `
+                    <li class="task-item">
+                        <input type="checkbox" class="task-checkbox" ${t.done ? 'checked' : ''} onchange="toggleTask('${m.name}', ${t.id})">
+                        <span class="task-text">${t.text}</span>
+                        ${isCaptain ? `
+                        <div class="captain-actions">
+                            <span class="action-icon" title="修改" onclick="editTask('${m.name}', ${t.id})">✏️</span>
+                            <span class="action-icon" title="强制删除" onclick="deleteTask('${m.name}', ${t.id})">🗑️</span>
+                        </div>
+                        ` : ''}
+                    </li>
+                `).join('');
+
+                let addTaskHTML = isCaptain ? `<input type="text" class="add-task-input" placeholder=">> 重型权限：敲击回合直接给这家伙塞新工作..." onkeydown="addTask('${m.name}', this)">` : '';
+                let photoHTML = m.photos.map(src => `<img src="${src}">`).join('');
+
+                const cardBox = document.createElement('div');
+                cardBox.className = 'member-card';
+                cardBox.innerHTML = `
+                    ${(m.name === CAPTAIN_NAME) ? '<div class="role-badge captain-badge">星盘操作层</div>' : '<div class="role-badge">地面受令节点</div>'}
+                    <h3>${m.name}</h3>
+                    
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">绝对攻坚进展：${percent}% ( ${completed} / ${total} )</div>
+                    <div class="progress-bar-container"><div class="progress-fill" style="width: ${percent}%;"></div></div>
+                    
+                    <ul class="task-list">${taskHTML}</ul>
+                    ${addTaskHTML}
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <textarea id="ref_${m.name}" class="m-input" rows="2" placeholder="强制上报：写下你今天遇到了什么狗屁倒灶的事..." onblur="saveToCloud()">${m.reflect}</textarea>
+                        <input id="plan_${m.name}" class="m-input" type="text" placeholder="立下军令状：明天的单点穿透方向是..." value="${m.plan}" onblur="saveToCloud()">
+                        <label class="upload-btn">+ 上传工作产出/通关截图以自证 <input type="file" accept="image/*" onchange="handleImg(event, '${m.name}')"></label>
+                        <div class="photo-grid">${photoHTML}</div>
+                    </div>
+                `;
+                dash.appendChild(cardBox);
+            });
         }
     </script>
 </body>
