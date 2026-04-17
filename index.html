@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ 正大杯省决实时监控终端</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        :root { --bg-color: #0b0f19; --glass-bg: rgba(20, 25, 40, 0.6); --glass-border: rgba(255, 255, 255, 0.08); --primary: #00d4ff; --secondary: #bd00ff; --text-main: #ffffff; --text-muted: #8b9bb4; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); background-image: radial-gradient(circle at 0% 0%, rgba(0, 212, 255, 0.15), transparent 30%), radial-gradient(circle at 100% 100%, rgba(189, 0, 255, 0.15), transparent 30%); color: var(--text-main); min-height: 100vh; padding: 2rem; }
+        #loginOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 100; display: flex; justify-content: center; align-items: center; }
+        .login-box { background: var(--glass-bg); padding: 3rem; border-radius: 20px; border: 1px solid var(--glass-border); text-align: center; }
+        .login-box input { background: rgba(255,255,255,0.1); border: 1px solid var(--primary); color: white; padding: 1rem; border-radius: 8px; width: 100%; margin: 1.5rem 0; font-size: 1.2rem; outline: none; text-align: center; }
+        .login-box button { background: linear-gradient(90deg, var(--primary), var(--secondary)); border: none; color: white; padding: 1rem 2rem; font-size: 1.1rem; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 2.2rem; background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 1400px; margin: 0 auto; }
+        .panel { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2rem; }
+        h2 { border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; }
+        .task-list { list-style: none; }
+        .task-item { display: flex; align-items: center; background: rgba(255,255,255,0.05); padding: 1rem; margin-bottom: 0.8rem; border-radius: 10px; }
+        .task-checkbox { width: 22px; height: 22px; appearance: none; border: 2px solid var(--primary); border-radius: 5px; margin-right: 15px; cursor: pointer; position: relative; }
+        .task-checkbox:checked { background: var(--primary); }
+        .task-checkbox:checked::after { content: '✓'; position: absolute; left: 4px; top: 0px; color: #000; font-weight: bold; }
+        .task-text { flex-grow: 1; font-size: 1.05rem; }
+        .task-checkbox:checked ~ .task-text { text-decoration: line-through; color: var(--text-muted); }
+        .milestone-day { margin-bottom: 2rem; background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 15px; }
+        .milestone-day h3 { color: var(--secondary); margin-bottom: 1rem; }
+        .m-input { width: 100%; background: transparent; border: 1px solid var(--glass-border); color: white; padding: 0.8rem; margin-bottom: 1rem; border-radius: 5px; font-family: inherit;}
+        .m-input:focus { border-color: var(--primary); outline: none; }
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 1rem; }
+        .photo-grid img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid var(--glass-border); }
+        .upload-btn { display: inline-block; padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); border-radius: 5px; cursor: pointer; font-size: 0.9rem; }
+        input[type="file"] { display: none; }
+        @media(max-width: 900px) { .dashboard { grid-template-columns: 1fr; } .login-box { width: 90%; } }
+    </style>
+</head>
+<body>
+    <div id="loginOverlay">
+        <div class="login-box">
+            <h2>打卡身份验证</h2>
+            <p style="color:var(--text-muted); margin-top: 10px;">输入绑定的手机号 (12:00 / 20:00 考核节点)</p>
+            <input type="tel" id="phoneInput" placeholder="输入11位手机号">
+            <button onclick="login()">进入指挥室</button>
+        </div>
+    </div>
+    <div class="header">
+        <h1>🏆 正大杯进度监控大屏</h1>
+        <p style="color: var(--text-muted);">当前视角绑定的手机号: <span id="currentUser" style="color:var(--primary)">未登录</span></p>
+    </div>
+    <div class="dashboard">
+        <div class="panel">
+            <h2>今日分工打卡 <span style="font-size: 0.9rem; font-weight: normal; background:rgba(0,212,255,0.2); padding: 3px 8px; border-radius:12px; color:var(--primary)">监控态</span></h2>
+            <ul class="task-list" id="taskList"></ul>
+        </div>
+        <div class="panel">
+            <h2>成果展示与复盘空间</h2>
+            <div class="milestone-day">
+                <h3>DAY 1 - 架构与初稿</h3>
+                <textarea class="m-input" rows="2" placeholder="填写反思..." id="day1Reflect" onblur="saveData()"></textarea>
+                <input class="m-input" type="text" placeholder="明日计划..." id="day1Plan" onblur="saveData()">
+                <label class="upload-btn">+ 上传截图并展示<input type="file" accept="image/*" onchange="handleImg(event, 'day1')"></label>
+                <div class="photo-grid" id="day1Photos"></div>
+            </div>
+            <div class="milestone-day">
+                <h3>DAY 2 - PPT定稿与排版</h3>
+                <textarea class="m-input" rows="2" placeholder="填写反思..." id="day2Reflect" onblur="saveData()"></textarea>
+                <input class="m-input" type="text" placeholder="明日计划..." id="day2Plan" onblur="saveData()">
+                <label class="upload-btn">+ 上传截图并展示<input type="file" accept="image/*" onchange="handleImg(event, 'day2')"></label>
+                <div class="photo-grid" id="day2Photos"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let appState = JSON.parse(localStorage.getItem('zdcb_data')) || {
+            tasks: [
+                { id: 1, phone: '13800138000', owner: '王队长', title: '完成第一章论证结构打磨', done: false },
+                { id: 2, phone: '13900139000', owner: '李排版', title: '修改摘要格式与模型排版', done: false }
+            ],
+            milestones: { day1: { reflect: '', plan: '', photos: [] }, day2: { reflect: '', plan: '', photos: [] } }
+        };
+        function login() {
+            const phone = document.getElementById('phoneInput').value;
+            if(phone.length >= 4) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('currentUser').innerText = phone; render(); }
+            else { alert('系统告警：请输入有效号码'); }
+        }
+        function handleImg(event, day) {
+            const file = event.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) { appState.milestones[day].photos.push(e.target.result); saveData(); render(); };
+            reader.readAsDataURL(file);
+        }
+        function saveData() {
+            appState.milestones.day1.reflect = document.getElementById('day1Reflect').value; appState.milestones.day1.plan = document.getElementById('day1Plan').value;
+            appState.milestones.day2.reflect = document.getElementById('day2Reflect').value; appState.milestones.day2.plan = document.getElementById('day2Plan').value;
+            localStorage.setItem('zdcb_data', JSON.stringify(appState));
+        }
+        function toggle(taskId) { const t = appState.tasks.find(x => x.id === taskId); t.done = !t.done; saveData(); render(); }
+        function render() {
+            document.getElementById('taskList').innerHTML = appState.tasks.map(t => `<li class="task-item"><input type="checkbox" class="task-checkbox" \${t.done ? 'checked' : ''} onchange="toggle(\${t.id})"><span class="task-text">[\${t.owner}] \${t.title}</span></li>`).join('');
+            document.getElementById('day1Reflect').value = appState.milestones.day1.reflect; document.getElementById('day1Plan').value = appState.milestones.day1.plan; document.getElementById('day2Reflect').value = appState.milestones.day2.reflect; document.getElementById('day2Plan').value = appState.milestones.day2.plan;
+            const renderPhotos = (day) => appState.milestones[day].photos.map(src => `<img src="\${src}">`).join('');
+            document.getElementById('day1Photos').innerHTML = renderPhotos('day1'); document.getElementById('day2Photos').innerHTML = renderPhotos('day2');
+        }
+    </script>
+</body>
+</html>
