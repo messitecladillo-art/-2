@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>正大杯双端同步阵列 (ESM穿透版)</title>
+    <title>正大杯双端同步阵列 (透视抓包版)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         :root { --bg-color: #0b0f19; --glass-bg: rgba(20, 25, 40, 0.6); --glass-border: rgba(255, 255, 255, 0.08); --primary: #00d4ff; --secondary: #bd00ff; --text-main: #ffffff; --text-muted: #8b9bb4; }
@@ -60,16 +60,16 @@
 <body>
     <div id="loginOverlay">
         <div class="login-box">
-            <h2>底层权限校验</h2>
-            <p style="color:var(--text-muted); margin-top: 10px;">采用 ESM 直连算法重构，尝试避开底层拦截</p>
-            <input type="text" id="nameInput" placeholder="请输入你的名字（朱洋洋 是最高统领）" value="">
-            <button onclick="login()">强行对接云端星盘</button>
+            <h2>透视抓包系统</h2>
+            <p style="color:var(--text-muted); margin-top: 10px;">如果报错，将直接抛出全网数据链路层错误</p>
+            <input type="text" id="nameInput" placeholder="你的名字" value="">
+            <button onclick="login()">强行对接底层数据库</button>
         </div>
-        <div id="systemLog">正在与高安全层协议同步...<br>若本条绿字出现，代表原生模块解析器已在此浏览器内成活。</div>
+        <div id="systemLog">监听器已就绪，正在准备拦截报错...</div>
     </div>
 
     <div class="header">
-        <h1>🏆 正大杯实时控制阵列 (云端重生版)</h1>
+        <h1>🏆 正大杯实时控制阵列 </h1>
         <p style="color: var(--text-muted);">
             <span class="status-dot"></span>多端通讯管道已激活 | 当前代号: <span id="currentUser" style="color:var(--primary); font-weight:bold;">未识别</span>
         </p>
@@ -77,7 +77,6 @@
 
     <div class="dashboard-grid" id="mainDashboard"></div>
 
-    <!-- 💥 核心战术变革：把你的整个网页当做是一个 node.js 原生包进行编译，绕路封杀 -->
     <script type="module">
         import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -89,21 +88,19 @@
         let myName = null;
         let isCaptain = false;
 
-        // 【立即执行突破】利用原生 ESM 特性直接硬解
         try {
             const _URL = 'https://koezaddleeifmutjuahxb.supabase.co';
             const _KEY = 'sb_publishable_HNanTTMNG-_so9Z-q9NR5A_L2ehha0M';
             supabaseClient = createClient(_URL, _KEY);
         } catch (e) {
             logPanel.style.color = "#ff4d4d";
-            logPanel.innerHTML = "⚠️ <b>彻底死局：</b> ESM 模块也被你们校园网彻底掐断了。如果你不用我上面那个单机纯净版，那所有人都必须用手机网络了。";
+            logPanel.innerHTML = "⚠️ <b>彻底死局：</b> ESM 模块也被彻底掐断了。";
         }
 
-        // 把内部函数扔到 window 暴露给外面原本按键的 onclick
         window.login = async function() {
             if (!supabaseClient) {
                 logPanel.style.color = "#ff4d4d";
-                logPanel.innerHTML = "⚠️ 组件强抽失败。";
+                logPanel.innerHTML = "⚠️ 组件引擎崩塌。";
                 return;
             }
 
@@ -112,7 +109,7 @@
             
             isCaptain = (myName === CAPTAIN_NAME);
             const btn = document.querySelector('#loginOverlay button');
-            btn.innerText = '正在用底层协议夺取控制权...';
+            btn.innerText = '正在调起API层强行取数...';
             btn.style.opacity = '0.6';
             
             try {
@@ -121,10 +118,15 @@
                     new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
                 ]);
                 
+                // 💥 极致核弹抓包：解除中文屏蔽伪装，直接赤裸裸吐出数据库原始报错！
                 if (res.error) {
-                    btn.innerText = '强行对接云端星盘'; btn.style.opacity = '1';
-                    logPanel.style.color = "#ff4d4d";
-                    logPanel.innerHTML = `⚠️ <b>读取受阻：</b> 接口通了，但 Supabase 里你根本没点那句 SQL 的 Run！`;
+                    btn.innerText = '拉取崩溃'; btn.style.opacity = '1';
+                    logPanel.style.color = "#ff3333";
+                    logPanel.innerHTML = `⚠️ <b>数据库抓包拦截 (把下面红字截图给我)：</b><hr><div style="text-align:left; font-size:1.1rem; margin-top:5px">` + 
+                    `Code: <b>${res.error.code}</b><br>` + 
+                    `Message: <b>${res.error.message}</b><br>` + 
+                    `Details: <b>${res.error.details || '无'}</b>` + 
+                    `</div><hr>`;
                     return;
                 }
                 
@@ -137,9 +139,9 @@
                 render(); 
                 activateRealtimeMagic();
             } catch (err) {
-                btn.innerText = '强行对接云端星盘'; btn.style.opacity = '1';
+                btn.innerText = '拉取崩溃'; btn.style.opacity = '1';
                 logPanel.style.color = "#ff4d4d";
-                logPanel.innerHTML = "⚠️ <b>API 彻底死亡：</b> 数据引擎完全失联，防火墙的拦截太死，必须立刻切换为热点或者使用单机版。";
+                logPanel.innerHTML = `⚠️ <b>API 彻底死亡：</b> ${err.message}`;
             }
         };
 
@@ -225,7 +227,7 @@
             let renderList = isCaptain ? appState.members : appState.members.filter(m => m.name === myName);
             
             if(renderList.length === 0) {
-                dash.innerHTML = '<h3 style="color:#ff4d4d; text-align:center; width:100%; padding:40px;">⚠️ 数据库里没这个名字，确认 SQL 里是否一字不差录入了你的名字。</h3>'; return;
+                dash.innerHTML = '<h3 style="color:#ff4d4d; text-align:center; width:100%; padding:40px;">⚠️ 数据库里没这个名字，确认 SQL 里登入的真实姓名。</h3>'; return;
             }
 
             renderList.forEach(m => {
@@ -252,19 +254,19 @@
                 const cardBox = document.createElement('div');
                 cardBox.className = 'member-card';
                 cardBox.innerHTML = `
-                    ${(m.name === CAPTAIN_NAME) ? '<div class="role-badge captain-badge">星舰控制台</div>' : '<div class="role-badge">边缘行动特遣</div>'}
+                    ${(m.name === CAPTAIN_NAME) ? '<div class="role-badge captain-badge">星舰控制台</div>' : '<div class="role-badge">任务节点</div>'}
                     <h3>${m.name}</h3>
                     
-                    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">今日推进值：${percent}% ( ${completed} / ${total} )</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">绝对攻坚进展：${percent}% ( ${completed} / ${total} )</div>
                     <div class="progress-bar-container"><div class="progress-fill" style="width: ${percent}%;"></div></div>
                     
                     <ul class="task-list">${taskHTML}</ul>
                     ${addTaskHTML}
                     
                     <div style="margin-top: 1.5rem;">
-                        <textarea id="ref_${m.name}" class="m-input" rows="2" placeholder="今日推进阻碍与反思..." onblur="saveToCloud()">${m.reflect}</textarea>
+                        <textarea id="ref_${m.name}" class="m-input" rows="2" placeholder="今日单点穿透总结..." onblur="saveToCloud()">${m.reflect}</textarea>
                         <input id="plan_${m.name}" class="m-input" type="text" placeholder="明日突击着力点..." value="${m.plan}" onblur="saveToCloud()">
-                        <label class="upload-btn">+ 打卡附注相关图文定格 <input type="file" accept="image/*" onchange="handleImg(event, '${m.name}')"></label>
+                        <label class="upload-btn">+ 打卡附注图文定格 <input type="file" accept="image/*" onchange="handleImg(event, '${m.name}')"></label>
                         <div class="photo-grid">${photoHTML}</div>
                     </div>
                 `;
