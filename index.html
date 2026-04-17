@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>正大杯双端同步阵列 (透视抓包版)</title>
+    <title>正大杯双端同步阵列 (代理劫持伪装版)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         :root { --bg-color: #0b0f19; --glass-bg: rgba(20, 25, 40, 0.6); --glass-border: rgba(255, 255, 255, 0.08); --primary: #00d4ff; --secondary: #bd00ff; --text-main: #ffffff; --text-muted: #8b9bb4; }
@@ -52,7 +52,7 @@
         .action-icon { cursor: pointer; font-size: 1.1rem; filter: grayscale(1); transition: 0.2s; }
         .action-icon:hover { filter: grayscale(0); transform: scale(1.2); }
         
-        #systemLog { margin-top: 20px; color: #00ff88; font-family: monospace; font-size: 0.95rem; line-height: 1.4; padding: 0 10px; text-align: center; }
+        #systemLog { margin-top: 20px; color: #ff9900; font-family: monospace; font-size: 0.95rem; line-height: 1.4; padding: 0 10px; text-align: center; }
 
         @media(max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } .login-box { width: 90%; } }
     </style>
@@ -60,18 +60,18 @@
 <body>
     <div id="loginOverlay">
         <div class="login-box">
-            <h2>透视抓包系统</h2>
-            <p style="color:var(--text-muted); margin-top: 10px;">如果报错，将直接抛出全网数据链路层错误</p>
-            <input type="text" id="nameInput" placeholder="你的名字" value="">
-            <button onclick="login()">强行对接底层数据库</button>
+            <h2>地下幽灵隧道网关</h2>
+            <p style="color:var(--text-muted); margin-top: 10px;">通过外网伪装桥接强行越狱，速度可能略微变缓</p>
+            <input type="text" id="nameInput" placeholder="输入全名认证" value="">
+            <button onclick="login()">激活代理网络中枢</button>
         </div>
-        <div id="systemLog">监听器已就绪，正在准备拦截报错...</div>
+        <div id="systemLog" style="display:none;"></div>
     </div>
 
     <div class="header">
         <h1>🏆 正大杯实时控制阵列 </h1>
         <p style="color: var(--text-muted);">
-            <span class="status-dot"></span>多端通讯管道已激活 | 当前代号: <span id="currentUser" style="color:var(--primary); font-weight:bold;">未识别</span>
+            <span class="status-dot" style="background:#ff9900; box-shadow:0 0 8px #ff9900"></span>已挂载地下反向代理 (需手动发包刷新) | 当前中枢: <span id="currentUser" style="color:var(--primary); font-weight:bold;">失联</span>
         </p>
     </div>
 
@@ -91,72 +91,65 @@
         try {
             const _URL = 'https://koezaddleeifmutjuahxb.supabase.co';
             const _KEY = 'sb_publishable_HNanTTMNG-_so9Z-q9NR5A_L2ehha0M';
-            supabaseClient = createClient(_URL, _KEY);
+            
+            // 😈 核心劫持钩子：把网络请求包裹在全网合法的透传网域里
+            const hijackedFetch = async (url, options) => {
+                const proxyBridge = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                return fetch(proxyBridge, options);
+            };
+
+            // 用这只假手去代替原本直接连防火墙的真手
+            supabaseClient = createClient(_URL, _KEY, {
+                global: { fetch: hijackedFetch }
+            });
+            
         } catch (e) {
-            logPanel.style.color = "#ff4d4d";
-            logPanel.innerHTML = "⚠️ <b>彻底死局：</b> ESM 模块也被彻底掐断了。";
+            alert("底层库彻底阵亡");
         }
 
         window.login = async function() {
-            if (!supabaseClient) {
-                logPanel.style.color = "#ff4d4d";
-                logPanel.innerHTML = "⚠️ 组件引擎崩塌。";
-                return;
-            }
+            if (!supabaseClient) return;
 
             myName = document.getElementById('nameInput').value.trim();
-            if(myName.length < 1) return alert('真实姓名为空！');
+            if(myName.length < 1) return alert('姓名不得为空！');
             
             isCaptain = (myName === CAPTAIN_NAME);
             const btn = document.querySelector('#loginOverlay button');
-            btn.innerText = '正在调起API层强行取数...';
-            btn.style.opacity = '0.6';
+            btn.innerText = '正在经过暗道跳板传输中...';
+            btn.style.opacity = '0.5';
+            logPanel.style.display = 'block';
+            logPanel.innerHTML = "正在与绕行中转站交换密钥，可能需要5~10秒，请等待...";
             
             try {
+                // 中转可能很慢，把超时时间加宽到 15 秒
                 const res = await Promise.race([
                     supabaseClient.from('zdcb_state').select('app_data').eq('id', 1).single(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
                 ]);
                 
-                // 💥 极致核弹抓包：解除中文屏蔽伪装，直接赤裸裸吐出数据库原始报错！
                 if (res.error) {
-                    btn.innerText = '拉取崩溃'; btn.style.opacity = '1';
+                    btn.innerText = '隧道传输被截获'; btn.style.opacity = '1';
                     logPanel.style.color = "#ff3333";
-                    logPanel.innerHTML = `⚠️ <b>数据库抓包拦截 (把下面红字截图给我)：</b><hr><div style="text-align:left; font-size:1.1rem; margin-top:5px">` + 
-                    `Code: <b>${res.error.code}</b><br>` + 
-                    `Message: <b>${res.error.message}</b><br>` + 
-                    `Details: <b>${res.error.details || '无'}</b>` + 
-                    `</div><hr>`;
+                    logPanel.innerHTML = `⚠️ <b>中转站也报错了，这证明数据库内部逻辑出了问题！</b><br>
+                    报错信息：<b>${res.error.message}</b><br>如果下面是空或者无权限，请回头去 Supabase 执行那句 RLS 的解锁代码！`;
                     return;
                 }
                 
                 appState = res.data.app_data;
                 document.getElementById('loginOverlay').style.display = 'none'; 
                 
-                const roleName = isCaptain ? '(获得上帝全权视野)' : '(已限制执行视野)';
+                const roleName = isCaptain ? '(获代理最高权限)' : '(获代理下限权限)';
                 document.getElementById('currentUser').innerText = `${myName} ${roleName}`; 
                 
                 render(); 
-                activateRealtimeMagic();
+                // 彻底废弃长轮询（长连接必然掉线）
+                // activateRealtimeMagic(); -> 移除！
             } catch (err) {
-                btn.innerText = '拉取崩溃'; btn.style.opacity = '1';
+                btn.innerText = '重试暗道跳板'; btn.style.opacity = '1';
                 logPanel.style.color = "#ff4d4d";
-                logPanel.innerHTML = `⚠️ <b>API 彻底死亡：</b> ${err.message}`;
+                logPanel.innerHTML = `⚠️ <b>连隧道代理都被墙了！！（或者中途超时中断）</b><br>错误日志： ${err.message}<br><br>这是彻底死局了。请放下挣扎，全组切回手机热点，或者拥抱我上边发的纯【单机版】！`;
             }
         };
-
-        function activateRealtimeMagic() {
-            try {
-                supabaseClient.channel('custom-update-channel')
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'zdcb_state' }, payload => {
-                    appState = payload.new.app_data;
-                    document.querySelectorAll('.member-card').forEach(p => {
-                        p.classList.add('syncing'); setTimeout(() => p.classList.remove('syncing'), 800);
-                    });
-                    render();
-                }).subscribe();
-            } catch(e){}
-        }
 
         window.saveToCloud = async function() {
             if (!isCaptain) {
@@ -172,8 +165,17 @@
                     if(rNode && pNode) { m.reflect = rNode.value; m.plan = pNode.value; }
                 });
             }
+            
+            // 写入同样会走地下隧道发送给 Supabase！
+            const notifyBtn = document.getElementById('currentUser');
+            const originalText = notifyBtn.innerText;
+            notifyBtn.innerText = "数据偷偷上传中...";
+            
             await supabaseClient.from('zdcb_state').update({ app_data: appState }).eq('id', 1);
+            notifyBtn.innerText = originalText;
         };
+
+        // ========== 以下所有交互全部不变 ==========
 
         window.toggleTask = function(memberName, taskId) { 
             const member = appState.members.find(m => m.name === memberName);
@@ -227,7 +229,7 @@
             let renderList = isCaptain ? appState.members : appState.members.filter(m => m.name === myName);
             
             if(renderList.length === 0) {
-                dash.innerHTML = '<h3 style="color:#ff4d4d; text-align:center; width:100%; padding:40px;">⚠️ 数据库里没这个名字，确认 SQL 里登入的真实姓名。</h3>'; return;
+                dash.innerHTML = '<h3 style="color:#ff4d4d; text-align:center; width:100%; padding:40px;">⚠️ 数据库查无此人，请确认姓名无误！</h3>'; return;
             }
 
             renderList.forEach(m => {
@@ -248,13 +250,13 @@
                     </li>
                 `).join('');
 
-                let addTaskHTML = isCaptain ? `<input type="text" class="add-task-input" placeholder=">> 敲击回车强行给此人下发新命令..." onkeydown="addTask('${m.name}', this)">` : '';
+                let addTaskHTML = isCaptain ? `<input type="text" class="add-task-input" placeholder=">> 敲回车强行分派任务..." onkeydown="addTask('${m.name}', this)">` : '';
                 let photoHTML = m.photos.map(src => `<img src="${src}">`).join('');
 
                 const cardBox = document.createElement('div');
                 cardBox.className = 'member-card';
                 cardBox.innerHTML = `
-                    ${(m.name === CAPTAIN_NAME) ? '<div class="role-badge captain-badge">星舰控制台</div>' : '<div class="role-badge">任务节点</div>'}
+                    ${(m.name === CAPTAIN_NAME) ? '<div class="role-badge captain-badge">总指挥官</div>' : '<div class="role-badge">节点侦察</div>'}
                     <h3>${m.name}</h3>
                     
                     <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">绝对攻坚进展：${percent}% ( ${completed} / ${total} )</div>
@@ -264,9 +266,9 @@
                     ${addTaskHTML}
                     
                     <div style="margin-top: 1.5rem;">
-                        <textarea id="ref_${m.name}" class="m-input" rows="2" placeholder="今日单点穿透总结..." onblur="saveToCloud()">${m.reflect}</textarea>
+                        <textarea id="ref_${m.name}" class="m-input" rows="2" placeholder="今日推进阻碍与反思..." onblur="saveToCloud()">${m.reflect}</textarea>
                         <input id="plan_${m.name}" class="m-input" type="text" placeholder="明日突击着力点..." value="${m.plan}" onblur="saveToCloud()">
-                        <label class="upload-btn">+ 打卡附注图文定格 <input type="file" accept="image/*" onchange="handleImg(event, '${m.name}')"></label>
+                        <label class="upload-btn">+ 上传任务核验图 <input type="file" accept="image/*" onchange="handleImg(event, '${m.name}')"></label>
                         <div class="photo-grid">${photoHTML}</div>
                     </div>
                 `;
